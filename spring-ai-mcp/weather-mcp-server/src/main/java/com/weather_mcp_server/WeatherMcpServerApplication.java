@@ -25,18 +25,18 @@ public class WeatherMcpServerApplication {
 			.build();
 	}
 
-	@Bean
-	public List<McpServerFeatures.SyncPromptSpecification> prompts() {
-		var prompt = new McpSchema.Prompt("weather-by-city-name", "Get weather information by city name",
-			List.of(new McpSchema.PromptArgument("city-name", "city name", true)));
-
-		var promptRegistration = new McpServerFeatures.SyncPromptSpecification(prompt, (exchange, getPromptRequest) -> {
-			String argument = (String) getPromptRequest.arguments().get("city-name");
-			var userMessage = new McpSchema.PromptMessage(McpSchema.Role.USER,
-				new McpSchema.TextContent("What's the weather " + argument + " of today?"));
-			return new McpSchema.GetPromptResult("Get weather of today by city name", List.of(userMessage));
-		});
-
-		return List.of(promptRegistration);
-	}
+//	@Bean
+//	public List<McpServerFeatures.SyncPromptSpecification> prompts() {
+//		var prompt = new McpSchema.Prompt("weather-by-city-name", "Get weather information by city name",
+//			List.of(new McpSchema.PromptArgument("city-name", "city name", true)));
+//
+//		var promptRegistration = new McpServerFeatures.SyncPromptSpecification(prompt, (exchange, getPromptRequest) -> {
+//			String argument = (String) getPromptRequest.arguments().get("city-name");
+//			var userMessage = new McpSchema.PromptMessage(McpSchema.Role.USER,
+//				new McpSchema.TextContent("What's the weather " + argument + " of today?"));
+//			return new McpSchema.GetPromptResult("Get weather of today by city name", List.of(userMessage));
+//		});
+//
+//		return List.of(promptRegistration);
+//	}
 }
