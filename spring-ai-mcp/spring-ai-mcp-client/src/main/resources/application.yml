@@ -1,0 +1,33 @@
+spring:
+  ai:
+    mcp:
+      client:
+        enabled: true
+        name: spring-ai-mcp-client
+        version: 1.0.0
+        request-timeout: 30s
+        type: SYNC  # or ASYNC for reactive applications
+        sse:
+          connections:
+            weather-mcp-server:
+              url: http://localhost:8081
+#            user-mcp-server:
+#              url: http://localhost:8082
+    openai: # DeepSeek 配置，完全兼容openai配置
+      base-url: https://api.deepseek.com  # DeepSeek的OpenAI式端点
+      api-key: sk-4eaecbb5b4ef4191a125659357aab38a
+      chat.options:
+        model: deepseek-chat
+# 通义千问配置
+#spring:
+#  ai:
+#    openai:
+#      base-url: https://dashscope.aliyuncs.com/compatible-mode  # 通义千问
+#      api-key: sk-xxxxxxxxxxx
+#      chat.options:
+#        model: qwen-plus
+
+
+logging:
+  level:
+    org.springframework.ai: DEBUG
