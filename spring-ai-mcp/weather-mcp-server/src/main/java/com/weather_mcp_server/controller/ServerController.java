@@ -24,7 +24,7 @@ public class ServerController {
 
     @GetMapping("/api/info")
     public String getServerInfo() {
-        return "Response from MCP Server (Port: " + port + ")";
+        return "Response from Weather MCP Server (Port: " + port + ")";
     }
 
     @GetMapping("/api/weather")
