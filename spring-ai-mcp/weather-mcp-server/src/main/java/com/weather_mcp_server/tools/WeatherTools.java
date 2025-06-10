@@ -32,10 +32,15 @@ public class WeatherTools {
 
         String adCode = switch (cityName) {
             case "武汉" -> "420100";
-            case "广州市" -> "440100";
+            case "广州" -> "440100";
             case "深圳" -> "440300";
+            case "北京" -> "110100";
             default -> null;
         };
+
+        if (adCode == null) {
+            return "抱歉，当前仅支持查询以下城市的天气：武汉、广州、深圳、北京";
+        }
 
         String url = weatherUrl + "?city={city}&key={key}&extensions=base&output=JSON";
         var uriVariables = new HashMap<String, Object>();
@@ -45,7 +50,7 @@ public class WeatherTools {
             String response = restTemplate.getForObject(url, String.class, uriVariables);
             return response;
         } catch (Exception e) {
-            return "Failed to fetch weather data: " + e.getMessage();
+            return "当前服务不可用: " + e.getMessage();
         }
     }
 
