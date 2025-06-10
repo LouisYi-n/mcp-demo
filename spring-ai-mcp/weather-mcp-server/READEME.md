@@ -44,14 +44,15 @@ GET http://localhost:8081/api/weather?cityName={城市名}
 
 ## Cursor MCP 配置
 
-### 1. 配置要求
-
-在 Cursor 中配置 MCP Server 时，需要满足以下要求：
-
+### 1. Prompt
+```
+我希望你能够：
 1. 直接调用已配置好的 MCP Server
-2. 清晰地说明调用了哪个 MCP Server 以及做了什么操作
+2. 清晰地说明调用了哪个 MCP Server 以及做了什么操作
 3. 展示调用结果
 4. 如果遇到错误，能够根据错误信息进行适当的处理和回答
+```
+
 
 ### 2. 配置步骤
 
