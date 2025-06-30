@@ -7,17 +7,6 @@ from flask import Flask, request, jsonify, render_template
 import logging
 from typing import List, Dict
 
-# 导入核心组件
-from core.router import SmartRouter
-from core.base import ToolHandler
-
-# 导入所有处理器
-from handlers.weather import WeatherHandler
-from handlers.chat import GeneralChatHandler
-from handlers.news import NewsHandler
-from handlers.translation import TranslationHandler
-from handlers.calculator import CalculatorHandler
-
 # 导入配置
 import config
 
@@ -33,41 +22,6 @@ logging.basicConfig(
 # 创建Flask应用
 app = Flask(__name__)
 
-# 初始化智能路由器
-router = SmartRouter()
-
-def initialize_handlers():
-    """初始化并注册所有工具处理器"""
-    # 注册所有工具处理器
-    router.register_handler(WeatherHandler())
-    router.register_handler(NewsHandler())
-    router.register_handler(TranslationHandler()) 
-    router.register_handler(CalculatorHandler())
-    router.register_handler(GeneralChatHandler(), is_default=True)
-
-def process_agent_query(query: str) -> dict:
-    """处理用户查询，使用智能路由分发到合适的工具处理器"""
-    try:
-        handler = router.route(query)
-        if handler:
-            return handler.handle(query)
-        else:
-            return {"think": "未找到合适的处理器", "answer": "抱歉，无法处理您的请求"}
-    except Exception as e:
-        logging.error(f"查询处理异常: {e}")
-        return {"think": f"处理异常: {e}", "answer": "处理请求时发生错误，请稍后重试"}
-
-def list_available_tools() -> List[Dict[str, str]]:
-    """列出所有可用的工具"""
-    tools = []
-    for handler in router.handlers:
-        tools.append({
-            "name": handler.get_tool_name(),
-            "description": handler.get_description(),
-            "is_default": handler == router.default_handler
-        })
-    return tools
-
 # ========== 路由定义 ==========
 
 @app.route('/')
@@ -81,31 +35,69 @@ def api_query():
     data = request.get_json()
     query = data.get('query', '')
     if not query:
-        return jsonify({'think': '', 'answer': '请输入问题'})
+        return jsonify({'result': '请输入问题'})
     
-    response_dict = process_agent_query(query)
-    return jsonify(response_dict)
+    result = agent.invoke({"input": query})
+    
+    # 解析工具调用过程
+    tool_calls = []
+    answer = ""
+    
+    if isinstance(result, dict):
+        # 提取工具调用信息
+        if "intermediate_steps" in result:
+            for step in result["intermediate_steps"]:
+                tool_name = step[0]  # 现在是简单的字符串
+                observation = step[1]
+                
+                # 只有调用外部服务的工具才显示调用信息
+                if tool_name == 'weather':
+                    tool_calls.append(f"🔧 我调用了 weather MCP，结果是：{observation}")
+                # general_chat 工具不显示调用信息，因为只是调用了大模型
+                # 其他工具可以根据需要添加
+        answer = result.get("output", str(result))
+    else:
+        answer = str(result)
+    
+    return jsonify({
+        'result': answer,
+        'tool_calls': tool_calls
+    })
 
 @app.route('/api/tools', methods=['GET'])
 def api_tools():
     """获取所有可用工具列表API"""
-    tools = list_available_tools()
-    return jsonify(tools)
+    # 返回工具的 name 和 description
+    if hasattr(agent, 'tools'):
+        tools = agent.tools
+    elif hasattr(agent, 'base_agent') and hasattr(agent.base_agent, 'tools'):
+        tools = agent.base_agent.tools
+    else:
+        # 导入工具作为备选
+        from tools.weather_tool import weather_tool
+        from tools.chat_tool import chat_tool
+        tools = [weather_tool, chat_tool]
+    
+    return jsonify({'tools': [
+        {'name': tool.name, 'description': tool.description}
+        for tool in tools
+    ]})
 
 @app.route('/health', methods=['GET'])
 def health_check():
     """健康检查接口"""
     return jsonify({
         "status": "healthy",
-        "service": "zdlang-agent",
-        "handlers_count": len(router.handlers)
+        "service": "zdlang-agent"
     })
 
 @app.route("/chat", methods=["POST"])
 def chat():
     data = request.json
     query = data.get("query", "")
-    result = agent.run(query)
+    result = agent.invoke({"input": query})
+    if isinstance(result, dict) and "output" in result:
+        result = result["output"]
     return jsonify({"result": result})
 
 def main():
@@ -117,10 +109,7 @@ def main():
     print(f"   - 天气API: {config.WEATHER_API_BASE_URL}")
     print()
     
-    # 初始化处理器
-    initialize_handlers()
-    
-    # 启动Flask应用
+    # 直接启动 Flask
     app.run(
         host=config.FLASK_HOST, 
         port=config.FLASK_PORT, 

@@ -54,15 +54,16 @@
     </div>
 
     <script>
+        let currentLoadingMessage = null; // 全局变量跟踪当前loading消息
+        
         // 加载可用工具列表
         function loadTools() {
             fetch('/api/tools')
                 .then(response => response.json())
-                .then(tools => {
+                .then(data => {
                     const toolsList = document.getElementById('toolsList');
-                    const toolNames = tools.map(tool => {
-                        const icon = tool.is_default ? '🤖' : getToolIcon(tool.name);
-                        return `${icon} ${tool.description}`;
+                    const toolNames = data.tools.map(tool => {
+                        return `${getToolIcon(tool.name)} ${tool.description}`;
                     });
                     toolsList.innerHTML = `可用工具: ${toolNames.join(' | ')}`;
                 })
@@ -87,38 +88,71 @@
             const query = document.getElementById('query').value.trim();
             const sendBtn = document.getElementById('sendBtn');
             if (!query) return;
+            
+            console.log('开始发送查询:', query);
             sendBtn.disabled = true;
             document.getElementById('query').disabled = true;
             addMessage(query, 'user-msg');
             document.getElementById('query').value = '';
-            const loadingId = addMessage('正在思考中...', 'agent-msg loading');
+            
+            // 移除之前的loading消息（如果存在）
+            if (currentLoadingMessage) {
+                currentLoadingMessage.remove();
+            }
+            
+            // 创建新的loading消息
+            currentLoadingMessage = addMessage('正在思考中...', 'agent-msg loading');
+            console.log('创建loading消息');
+            
             fetch('/api/query', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({query: query})
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('收到响应，状态:', response.status);
+                return response.json();
+            })
             .then(data => {
-                removeMessage(loadingId);
-                if (data.think) {
-                    addMessage('🤔 ' + data.think, 'agent-msg think-msg');
+                console.log('解析JSON数据:', data);
+                
+                // 移除loading消息
+                if (currentLoadingMessage) {
+                    console.log('移除loading消息');
+                    currentLoadingMessage.remove();
+                    currentLoadingMessage = null;
                 }
-                if (data.answer) {
-                    addMessage('💬 ' + data.answer, 'agent-msg');
-                } else if (!data.think) {
+                
+                // 先展示工具调用过程
+                if (data.tool_calls && data.tool_calls.length > 0) {
+                    console.log('显示工具调用信息，数量:', data.tool_calls.length);
+                    data.tool_calls.forEach(msg => addMessage(msg, 'agent-msg'));
+                }
+                // 再展示最终答案
+                if (data.result) {
+                    console.log('显示最终答案，长度:', data.result.length);
+                    addMessage('💬 ' + data.result, 'agent-msg');
+                } else {
+                    console.log('没有结果，显示错误消息');
                     addMessage('抱歉，我没有得到回复。', 'agent-msg error');
                 }
             })
             .catch(error => {
-                removeMessage(loadingId);
+                console.error('请求失败:', error);
+                if (currentLoadingMessage) {
+                    currentLoadingMessage.remove();
+                    currentLoadingMessage = null;
+                }
                 addMessage('发生错误: ' + error, 'agent-msg error');
             })
             .finally(() => {
+                console.log('请求完成，恢复按钮状态');
                 sendBtn.disabled = false;
                 document.getElementById('query').disabled = false;
                 document.getElementById('query').focus();
             });
         }
+        
         function addMessage(text, className) {
             const chatBox = document.getElementById('chatBox');
             const div = document.createElement('div');
@@ -128,16 +162,10 @@
                 div.textContent = text;
             }
             div.className = className;
-            div.id = 'msg-' + Date.now();
             chatBox.appendChild(div);
             chatBox.scrollTop = chatBox.scrollHeight;
-            return div.id;
-        }
-        function removeMessage(messageId) {
-            const element = document.getElementById(messageId);
-            if (element) {
-                element.remove();
-            }
+            console.log('添加消息:', text.substring(0, 30), '类名:', className);
+            return div; // 直接返回DOM元素
         }
     </script>
 </body>

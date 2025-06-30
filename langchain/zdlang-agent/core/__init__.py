@@ -4,6 +4,5 @@ Core package - 核心组件包
 """
 
 from .base import ToolHandler
-from .router import SmartRouter
 
-__all__ = ['ToolHandler', 'SmartRouter'] 
+__all__ = ['ToolHandler'] 
