@@ -1,60 +1,60 @@
 """
-zdlang-agent 主应用入口文件
-智能代理：使用AI路由自动识别意图并调用相应工具
+zdlang-agent Main Application Entry
+Intelligent Agent: Automatically identifies user intent and calls appropriate tools using AI routing
 """
 
 from flask import Flask, request, jsonify, render_template
 import logging
 from typing import List, Dict
 
-# 导入配置
+# Import configuration
 import config
 
-# 导入 LangChain Agent
+# Import LangChain Agent
 from agent import agent
 
-# 配置日志
+# Configure logging
 logging.basicConfig(
     level=logging.INFO, 
     format='%(asctime)s %(levelname)s %(message)s'
 )
 
-# 创建Flask应用
+# Create Flask application
 app = Flask(__name__)
 
-# ========== 路由定义 ==========
+# ========== Route Definitions ==========
 
 @app.route('/')
 def index():
-    """主页面"""
+    """Main page"""
     return render_template('index.html')
 
 @app.route('/api/query', methods=['POST'])
 def api_query():
-    """处理用户查询API"""
+    """Handle user query API"""
     data = request.get_json()
     query = data.get('query', '')
     if not query:
-        return jsonify({'result': '请输入问题'})
+        return jsonify({'result': 'Please enter a question'})
     
     result = agent.invoke({"input": query})
     
-    # 解析工具调用过程
+    # Parse tool calling process
     tool_calls = []
     answer = ""
     
     if isinstance(result, dict):
-        # 提取工具调用信息
+        # Extract tool calling information
         if "intermediate_steps" in result:
             for step in result["intermediate_steps"]:
-                tool_name = step[0]  # 现在是简单的字符串
+                tool_name = step[0]  # Now it's a simple string
                 observation = step[1]
                 
-                # 只有调用外部服务的工具才显示调用信息
+                # Only show calling information for external service tools
                 if tool_name == 'weather':
-                    tool_calls.append(f"🔧 我调用了 weather MCP，结果是：{observation}")
-                # general_chat 工具不显示调用信息，因为只是调用了大模型
-                # 其他工具可以根据需要添加
+                    tool_calls.append(f"🔧 I called weather MCP, result: {observation}")
+                # general_chat tool doesn't show calling info, as it only calls the LLM
+                # Other tools can be added as needed
         answer = result.get("output", str(result))
     else:
         answer = str(result)
@@ -66,14 +66,14 @@ def api_query():
 
 @app.route('/api/tools', methods=['GET'])
 def api_tools():
-    """获取所有可用工具列表API"""
-    # 返回工具的 name 和 description
+    """Get all available tools list API"""
+    # Return tool name and description
     if hasattr(agent, 'tools'):
         tools = agent.tools
     elif hasattr(agent, 'base_agent') and hasattr(agent.base_agent, 'tools'):
         tools = agent.base_agent.tools
     else:
-        # 导入工具作为备选
+        # Import tools as fallback
         from tools.weather_tool import weather_tool
         from tools.chat_tool import chat_tool
         tools = [weather_tool, chat_tool]
@@ -85,7 +85,7 @@ def api_tools():
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    """健康检查接口"""
+    """Health check endpoint"""
     return jsonify({
         "status": "healthy",
         "service": "zdlang-agent"
@@ -101,15 +101,15 @@ def chat():
     return jsonify({"result": result})
 
 def main():
-    """主函数"""
-    print("🚀 启动 zdlang-agent Web 服务...")
-    print("📱 访问地址: http://localhost:5001")
-    print("🔧 依赖服务:")
+    """Main function"""
+    print("🚀 Starting zdlang-agent Web Service...")
+    print("📱 Access URL: http://localhost:5001")
+    print("🔧 Dependent Services:")
     print(f"   - Ollama: {config.OLLAMA_BASE_URL}")
-    print(f"   - 天气API: {config.WEATHER_API_BASE_URL}")
+    print(f"   - Weather API: {config.WEATHER_API_BASE_URL}")
     print()
     
-    # 直接启动 Flask
+    # Start Flask directly
     app.run(
         host=config.FLASK_HOST, 
         port=config.FLASK_PORT, 

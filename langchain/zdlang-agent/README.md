@@ -1,43 +1,273 @@
-# zdlang-agent
+# ZDLang Agent - Intelligent Multi-Tool Agent System
 
-## 项目简介
-zdlang-agent 是一个基于 LangChain 的智能代理（Agent）项目，能够根据用户问题自动选择调用本地大模型（如 deepseek-r1-7b）或本地 mcp-server 查询天气。
+A sophisticated intelligent agent system built with LangChain that automatically routes between local LLM services and MCP (Model Context Protocol) weather services. The system provides seamless integration between conversational AI and weather data retrieval through an intuitive web interface.
 
-- 当你询问城市天气时，Agent 会自动访问 mcp-server 查询天气。
-- 当你提其他问题时，Agent 会自动调用本地 Ollama 的 deepseek-r1-7b 进行回答。
+## 🌟 Features
 
-## 主要特性
-- 智能路由：根据问题内容自动选择调用天气服务或大模型。
-- 支持本地大模型推理。
-- 可扩展，便于集成更多工具。
+- **Intelligent Routing**: Automatically detects user intent and routes to appropriate tools
+- **Dual-Language Support**: Supports both English and Chinese queries
+- **Weather Integration**: Real-time weather data via MCP weather service
+- **Local LLM**: Powered by deepseek-r1-7b model through Ollama
+- **Web Interface**: Clean, modern web UI for easy interaction
+- **RESTful API**: Complete API endpoints for programmatic access
+- **Tool Transparency**: Shows which tools are being used during processing
 
-## 使用方法
+## 🏗️ Architecture
 
-### 1. 环境准备
-- Windows 11 系统
-- Python 3.9+
-- 已安装 [Ollama](https://ollama.com/) 并运行 deepseek-r1-7b
-- 已运行 mcp-server（本地天气查询服务）
-- 已运行 Open-WebUI（可选，便于交互）
-
-### 2. 安装依赖
-```bash
-pip install -r requirements.txt
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Web Frontend  │────│  Flask Web API  │────│  SimpleAgent    │
+│   (index.html)  │    │    (app.py)     │    │   (agent.py)    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                                       │
+                                                       ▼
+                                              ┌─────────────────┐
+                                              │ Intent Router   │
+                                              │ (Keyword Match) │
+                                              └─────────────────┘
+                                                       │
+                                    ┌──────────────────┼──────────────────┐
+                                    ▼                  ▼                  ▼
+                           ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
+                           │  Weather Tool   │ │   Chat Tool     │ │  External APIs  │
+                           │(weather_tool.py)│ │ (chat_tool.py)  │ │                 │
+                           └─────────────────┘ └─────────────────┘ └─────────────────┘
+                                    │                  │
+                                    ▼                  ▼
+                           ┌─────────────────┐ ┌─────────────────┐
+                           │ MCP Weather API │ │  Ollama LLM     │
+                           │ (localhost:8081)│ │(localhost:11434)│
+                           └─────────────────┘ └─────────────────┘
 ```
 
-### 3. 启动 Agent
-```bash
-python agent.py
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Python 3.8+
+- Ollama with deepseek-r1-7b model
+- MCP Weather Service running on port 8081
+- Node.js (for MCP service)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd zdlang-agent
+   ```
+
+2. **Install Python dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Start Ollama service**
+   ```bash
+   ollama serve
+   ollama pull deepseek-r1:7b
+   ```
+
+4. **Start MCP Weather Service**
+   ```bash
+   # In a separate terminal
+   cd mcp-weather-service
+   npm start
+   ```
+
+5. **Run the application**
+   ```bash
+   python app.py
+   ```
+
+6. **Access the web interface**
+   Open your browser and navigate to: `http://localhost:5001`
+
+## 📋 API Endpoints
+
+### Health Check
+```http
+GET /health
+```
+Returns system health status.
+
+### Get Available Tools
+```http
+GET /api/tools
+```
+Returns list of available tools with descriptions.
+
+### Query Processing
+```http
+POST /api/query
+Content-Type: application/json
+
+{
+  "query": "What's the weather in Beijing?"
+}
 ```
 
-### 4. 交互方式
-- 通过命令行输入问题，Agent 会自动判断调用天气服务或大模型。
+**Response:**
+```json
+{
+  "success": true,
+  "result": "Beijing current weather: overcast, temperature 28°C, southeast wind ≤3 level, humidity 78%",
+  "intermediate_steps": [["weather", "Weather data retrieved successfully"]],
+  "query": "What's the weather in Beijing?"
+}
+```
 
-## 目录结构
-- agent.py         # 主程序，Agent 实现
-- requirements.txt # 依赖包列表
-- README.md        # 项目说明
-- Create-agent.md  # 构建步骤说明
+## 🛠️ Project Structure
 
-## 联系方式
-如有问题请联系项目维护者。 
+```
+zdlang-agent/
+├── app.py                 # Flask web server and API endpoints
+├── agent.py              # SimpleAgent implementation
+├── config.py             # Configuration settings
+├── requirements.txt      # Python dependencies
+├── tools/
+│   ├── __init__.py
+│   ├── weather_tool.py   # Weather query tool
+│   └── chat_tool.py      # General conversation tool
+├── templates/
+│   └── index.html        # Web interface
+└── core/
+    └── __init__.py
+```
+
+## 🔧 Configuration
+
+Edit `config.py` to customize:
+
+- **Flask Settings**: Port, debug mode, host configuration
+- **Ollama Settings**: Model name, API endpoint
+- **MCP Settings**: Weather service URL and timeout
+- **Agent Settings**: Max iterations, execution timeout
+
+```python
+# Example configuration
+FLASK_CONFIG = {
+    'host': '0.0.0.0',
+    'port': 5001,
+    'debug': True
+}
+
+OLLAMA_CONFIG = {
+    'base_url': 'http://localhost:11434',
+    'model': 'deepseek-r1:7b'
+}
+```
+
+## 💡 Usage Examples
+
+### Weather Queries
+- "What's the weather in Shanghai?"
+- "上海天气怎么样？"
+- "Tell me about Beijing's weather"
+- "北京现在下雨吗？"
+
+### General Conversation
+- "Tell me a joke"
+- "What is artificial intelligence?"
+- "Explain quantum computing"
+- "How do neural networks work?"
+
+## 🔍 How It Works
+
+1. **Intent Recognition**: The SimpleAgent analyzes user queries using keyword matching
+2. **Tool Selection**: Based on detected intent, routes to appropriate tool:
+   - Weather keywords → Weather Tool → MCP Weather API
+   - Other queries → Chat Tool → Ollama LLM
+3. **Response Processing**: Tools process requests and return formatted responses
+4. **Result Delivery**: Final results are sent back through the API to the frontend
+
+## 🌤️ Weather Tool Features
+
+- **Multi-language Support**: Recognizes weather queries in English and Chinese
+- **City Recognition**: Supports major cities in both languages
+- **Data Processing**: Directly parses weather API responses for optimal performance
+- **Error Handling**: Comprehensive error handling for API failures
+
+**Supported Weather Keywords:**
+- English: weather, temperature, rain, sunny, cloudy, wind
+- Chinese: 天气, 气温, 温度, 下雨, 晴天, 阴天, 刮风
+
+## 💬 Chat Tool Features
+
+- **LLM Integration**: Powered by deepseek-r1-7b through Ollama
+- **Response Cleaning**: Removes internal thinking tags for clean output
+- **Error Recovery**: Handles LLM failures gracefully
+- **Logging**: Comprehensive logging for debugging
+
+## 🎯 Key Design Decisions
+
+### Why SimpleAgent?
+- **Reliability**: Avoids complex ReAct format parsing issues
+- **Performance**: Direct keyword matching is faster than LLM-based routing
+- **Maintainability**: Easier to debug and extend
+- **Predictability**: Consistent behavior across different query types
+
+### Tool Architecture Benefits
+- **Modularity**: Easy to add new tools
+- **Isolation**: Tool failures don't affect the entire system
+- **Flexibility**: Each tool can have its own processing logic
+- **Scalability**: Can easily integrate additional external services
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+1. **Ollama Connection Failed**
+   - Ensure Ollama service is running: `ollama serve`
+   - Check if model is installed: `ollama list`
+
+2. **MCP Weather Service Unavailable**
+   - Verify MCP service is running on port 8081
+   - Check network connectivity to weather API
+
+3. **Web Interface Not Loading**
+   - Confirm Flask app is running on correct port
+   - Check for port conflicts
+
+### Debug Mode
+Enable debug logging by setting `debug=True` in `config.py`:
+
+```python
+FLASK_CONFIG = {
+    'debug': True
+}
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature-name`
+3. Commit your changes: `git commit -am 'Add feature'`
+4. Push to the branch: `git push origin feature-name`
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙏 Acknowledgments
+
+- **LangChain**: For the agent framework
+- **Ollama**: For local LLM serving
+- **MCP Protocol**: For weather service integration
+- **Flask**: For the web framework
+
+## 📞 Support
+
+For questions or issues:
+1. Check the troubleshooting section above
+2. Review the logs for error details
+3. Open an issue on GitHub with:
+   - Error description
+   - Steps to reproduce
+   - System information
+   - Relevant log output
+
+---
+
+**Built with ❤️ using LangChain, Flask, and Ollama** 

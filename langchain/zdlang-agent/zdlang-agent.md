@@ -1,258 +1,261 @@
-# zdlang-agent (基于 LangChain 的智能代理)
+# zdlang-agent (LangChain-based Intelligent Agent)
 
-## 项目简介
-zdlang-agent 是一个基于 LangChain 框架的智能代理（Agent）项目，能够根据用户问题自动选择调用本地大模型（deepseek-r1:7b/Ollama）或本地 MCP 天气服务。项目采用简化的智能路由机制，避免了复杂的 ReAct 格式问题。
+## Project Overview
+zdlang-agent is an intelligent agent project based on the LangChain framework that can automatically choose to call local large language models (deepseek-r1:7b/Ollama) or local MCP weather services based on user questions. The project adopts a simplified intelligent routing mechanism to avoid complex ReAct format issues.
 
-**核心功能：**
-- 🌤️ **天气查询**：自动识别天气相关问题，调用 MCP 天气服务
-- 💬 **智能对话**：处理一般问题、知识问答、讲笑话等，调用本地 Ollama 大模型
-- 🎯 **智能路由**：基于关键词匹配的意图识别，无需复杂的 ReAct 格式
-- 🌐 **Web界面**：提供友好的 Web 聊天界面，支持实时交互
+**Core Features:**
+- 🌤️ **Weather Queries**: Automatically identifies weather-related questions and calls MCP weather service
+- 💬 **Intelligent Conversations**: Handles general questions, knowledge Q&A, joke telling, etc., calling local Ollama large models
+- 🎯 **Smart Routing**: Intent recognition based on keyword matching, no complex ReAct format required
+- 🌐 **Web Interface**: Provides friendly web chat interface with real-time interaction support
 
-## 技术架构
+## Technical Architecture
 
-### 项目结构
+### Project Structure
 ```
 zdlang-agent/
-├── app.py                  # Flask Web API 入口，HTTP服务
-├── agent.py                # 简化智能代理实现 (SimpleAgent)
-├── config.py               # 统一配置管理
-├── requirements.txt        # Python依赖包
+├── app.py                  # Flask Web API entry point, HTTP service
+├── agent.py                # Simplified intelligent agent implementation (SimpleAgent)
+├── config.py               # Unified configuration management
+├── requirements.txt        # Python dependencies
 ├── templates/
-│   └── index.html         # Web聊天界面
-├── tools/                 # LangChain工具集
-│   ├── weather_tool.py    # MCP天气查询工具
-│   └── chat_tool.py       # Ollama对话工具
-├── core/                  # 核心基础模块
+│   └── index.html         # Web chat interface
+├── tools/                 # LangChain toolset
+│   ├── weather_tool.py    # MCP weather query tool
+│   └── chat_tool.py       # Ollama conversation tool
+├── core/                  # Core foundation modules
 │   ├── __init__.py
 │   └── base.py
-├── services/              # 外部服务封装
-│   ├── weather_api.py     # 天气API服务
-│   ├── ollama.py          # Ollama服务
+├── services/              # External service wrappers
+│   ├── weather_api.py     # Weather API service
+│   ├── ollama.py          # Ollama service
 │   └── __init__.py
-└── utils/                 # 工具函数
+└── utils/                 # Utility functions
 ```
 
-### 核心组件
+### Core Components
 
 #### 1. SimpleAgent (agent.py)
 ```python
 class SimpleAgent:
-    """简化的智能代理，避免复杂的ReAct格式问题"""
+    """Simplified intelligent agent to avoid complex ReAct format issues"""
     
     def invoke(self, inputs):
         query = inputs.get("input", "")
         
-        # 智能路由：根据关键词判断意图
+        # Intelligent routing: determine intent based on keywords
         if self._is_weather_query(query):
             return self._handle_weather(query)
         else:
             return self._handle_chat(query)
 ```
 
-**特点：**
-- 基于关键词匹配的智能路由
-- 避免 LLM 输出格式错误问题
-- 支持天气查询和一般对话两种模式
-- 返回标准化的结果格式
+**Features:**
+- Intelligent routing based on keyword matching
+- Avoids LLM output format error issues
+- Supports two modes: weather queries and general conversations
+- Returns standardized result format
 
-#### 2. 工具系统 (tools/)
+#### 2. Tool System (tools/)
 
-**天气工具 (weather_tool.py):**
-- 调用本地 MCP 天气服务 (localhost:8081)
-- 解析固定格式的 JSON 天气数据
-- 格式化成自然语言输出
-- 支持错误处理和超时处理
+**Weather Tool (weather_tool.py):**
+- Calls local MCP weather service (localhost:8081)
+- Parses fixed-format JSON weather data
+- Formats output into natural language
+- Supports error handling and timeout processing
 
-**对话工具 (chat_tool.py):**
-- 集成 Ollama 本地大模型 (deepseek-r1:7b)
-- 清理 LLM 输出中的 `<think>` 标签
-- 支持通用对话、知识问答、讲笑话等
+**Chat Tool (chat_tool.py):**
+- Integrates Ollama local large model (deepseek-r1:7b)
+- Cleans `<think>` tags from LLM output
+- Supports general conversations, knowledge Q&A, joke telling, etc.
 
-#### 3. Web服务 (app.py)
-- Flask HTTP API 服务
-- RESTful 接口设计
-- 实时聊天界面
-- 工具调用过程展示
+#### 3. Web Service (app.py)
+- Flask HTTP API service
+- RESTful interface design
+- Real-time chat interface
+- Tool calling process display
 
-## 主要依赖
+## Main Dependencies
 
-### Python包
+### Python Packages
 ```txt
-langchain              # LangChain核心框架
-langchain-community    # 社区扩展包
-langchain-core         # 核心组件
-flask                  # Web框架
-requests              # HTTP客户端
+langchain              # LangChain core framework
+langchain-community    # Community extensions
+langchain-core         # Core components
+flask                  # Web framework
+requests              # HTTP client
 ```
 
-### 外部服务
-- **Ollama**: 本地大模型服务 (localhost:11434)
-  - 模型: deepseek-r1:7b
-  - 用途: 通用对话、知识问答
-- **MCP天气服务**: 本地天气API (localhost:8081)
-  - 提供城市天气查询
-  - 返回标准JSON格式数据
+### External Services
+- **Ollama**: Local large model service (localhost:11434)
+  - Model: deepseek-r1:7b
+  - Purpose: General conversations, knowledge Q&A
+- **MCP Weather Service**: Local weather API (localhost:8081)
+  - Provides city weather queries
+  - Returns standard JSON format data
 
-## API接口
+## API Interfaces
 
-### 1. 主要查询接口
+### 1. Main Query Interface
 ```bash
 POST /api/query
 Content-Type: application/json
 
 {
-  "query": "北京天气怎么样？"
+  "query": "How's the weather in Beijing?"
 }
 ```
 
-**响应格式:**
+**Response Format:**
 ```json
 {
-  "result": "北京当前天气：晴，温度25°C，南风≤3级，湿度65%",
-  "tool_calls": ["🔧 我调用了 weather MCP，结果是：..."]
+  "result": "Beijing current weather: sunny, temperature 25°C, south wind ≤3 level, humidity 65%",
+  "tool_calls": ["🔧 I called weather MCP, result: ..."]
 }
 ```
 
-### 2. 工具列表接口
+### 2. Tools List Interface
 ```bash
 GET /api/tools
 ```
 
-### 3. 健康检查接口
+### 3. Health Check Interface
 ```bash
 GET /health
 ```
 
-## 智能路由机制
+## Intelligent Routing Mechanism
 
-### 天气查询识别
-**关键词列表:**
+### Weather Query Recognition
+**Keyword List:**
 ```python
 weather_keywords = [
+    "weather", "temperature", "temp", "rain", "sunny", "cloudy", "wind", 
+    "overcast", "rainy", "snowy", "typhoon", "humidity", "forecast",
+    # Chinese keywords for compatibility
     "天气", "气温", "温度", "下雨", "晴天", "阴天", "刮风", 
     "多云", "雨天", "雪天", "台风", "湿度", "风力"
 ]
 ```
 
-**支持城市:**
-- 主要城市: 北京、上海、广州、深圳、武汉、成都等
-- 默认城市: 北京（当未识别到具体城市时）
+**Supported Cities:**
+- Major cities: Beijing, Shanghai, Guangzhou, Shenzhen, Wuhan, Chengdu, etc.
+- Default city: Beijing (when no specific city is identified)
 
-### 处理流程
-1. **意图识别**: 检查查询中是否包含天气关键词
-2. **路由分发**: 
-   - 天气查询 → weather_tool → MCP服务
-   - 其他问题 → chat_tool → Ollama模型
-3. **结果处理**: 格式化输出并返回工具调用信息
+### Processing Flow
+1. **Intent Recognition**: Check if query contains weather keywords
+2. **Route Dispatch**: 
+   - Weather queries → weather_tool → MCP service
+   - Other questions → chat_tool → Ollama model
+3. **Result Processing**: Format output and return tool calling information
 
-## 使用指南
+## Usage Guide
 
-### 1. 环境准备
+### 1. Environment Setup
 ```bash
-# 安装Python依赖
+# Install Python dependencies
 pip install -r requirements.txt
 
-# 启动Ollama服务 (需要预先安装)
+# Start Ollama service (needs to be pre-installed)
 ollama serve
 
-# 拉取模型
+# Pull model
 ollama pull deepseek-r1:7b
 
-# 启动MCP天气服务 (需要单独部署)
-# 确保 localhost:8081 可访问
+# Start MCP weather service (needs separate deployment)
+# Ensure localhost:8081 is accessible
 ```
 
-### 2. 启动应用
+### 2. Start Application
 ```bash
 python app.py
 ```
 
-**服务信息:**
-- Web界面: http://localhost:5001
-- API端点: http://localhost:5001/api/*
-- 调试模式: 默认开启
+**Service Information:**
+- Web interface: http://localhost:5001
+- API endpoints: http://localhost:5001/api/*
+- Debug mode: Enabled by default
 
-### 3. 使用示例
+### 3. Usage Examples
 
-**天气查询:**
+**Weather Query:**
 ```
-用户: "深圳天气怎么样？"
-系统: 🔧 我调用了 weather MCP，结果是：深圳市当前天气：阴，温度27°C，东南风≤3级，湿度80%
-```
-
-**一般对话:**
-```
-用户: "讲个笑话"
-系统: 有一天，一只猫遇到了一只狗...
+User: "How's the weather in Shenzhen?"
+System: 🔧 I called weather MCP, result: Shenzhen current weather: overcast, temperature 27°C, southeast wind ≤3 level, humidity 80%
 ```
 
-## 配置说明
+**General Conversation:**
+```
+User: "Tell me a joke"
+System: One day, a cat met a dog...
+```
 
-### config.py 主要配置
+## Configuration
+
+### config.py Main Configuration
 ```python
-# 服务配置
+# Service Configuration
 FLASK_HOST = '0.0.0.0'
 FLASK_PORT = 5001
 FLASK_DEBUG = True
 
-# Ollama配置
+# Ollama Configuration
 OLLAMA_BASE_URL = "http://localhost:11434"
 OLLAMA_MODEL = "deepseek-r1:7b"
 
-# 天气API配置
+# Weather API Configuration
 WEATHER_API_BASE_URL = "http://localhost:8081"
 WEATHER_API_TIMEOUT = 10
 ```
 
-## 扩展开发
+## Extension Development
 
-### 1. 添加新工具
+### 1. Adding New Tools
 ```python
-# 1. 创建工具函数
+# 1. Create tool function
 def new_tool_func(input_param: str) -> str:
-    # 实现具体功能
+    # Implement specific functionality
     return result
 
-# 2. 创建LangChain工具
+# 2. Create LangChain tool
 new_tool = Tool(
     name="new_tool",
     func=new_tool_func,
-    description="工具描述"
+    description="Tool description"
 )
 
-# 3. 注册到agent
+# 3. Register to agent
 tools = [weather_tool, chat_tool, new_tool]
 ```
 
-### 2. 扩展路由逻辑
-在 `SimpleAgent._is_weather_query()` 中添加新的意图识别逻辑。
+### 2. Extend Routing Logic
+Add new intent recognition logic in `SimpleAgent._is_weather_query()`.
 
-### 3. 更换大模型
-修改 `config.py` 中的 `OLLAMA_MODEL` 配置，支持任何Ollama兼容的模型。
+### 3. Change Large Model
+Modify `OLLAMA_MODEL` configuration in `config.py`, supports any Ollama-compatible model.
 
-## 项目特点
+## Project Features
 
-### ✅ 优势
-- **架构简洁**: 避免复杂的ReAct格式，使用关键词路由
-- **响应稳定**: 不依赖LLM输出格式，减少解析错误
-- **易于扩展**: 标准的LangChain工具接口
-- **用户友好**: 直观的Web界面，实时交互体验
-- **本地部署**: 完全本地化，数据安全可控
+### ✅ Advantages
+- **Simple Architecture**: Avoids complex ReAct format, uses keyword routing
+- **Stable Response**: Doesn't rely on LLM output format, reduces parsing errors
+- **Easy to Extend**: Standard LangChain tool interface
+- **User Friendly**: Intuitive web interface, real-time interaction experience
+- **Local Deployment**: Completely localized, secure and controllable data
 
-### 🎯 适用场景
-- 个人智能助手
-- 企业内部知识问答
-- 本地化AI服务部署
-- LangChain学习和实验
+### 🎯 Use Cases
+- Personal intelligent assistant
+- Enterprise internal knowledge Q&A
+- Local AI service deployment
+- LangChain learning and experimentation
 
-## 参考资源
-- [LangChain 官方文档](https://python.langchain.com/)
-- [Ollama 官方文档](https://ollama.com/)
-- [Flask 官方文档](https://flask.palletsprojects.com/)
+## References
+- [LangChain Official Documentation](https://python.langchain.com/)
+- [Ollama Official Documentation](https://ollama.com/)
+- [Flask Official Documentation](https://flask.palletsprojects.com/)
 
 ---
 
-**项目状态**: ✅ 生产就绪  
-**版本**: v1.0.0  
-**最后更新**: 2025-06-30
+**Project Status**: ✅ Production Ready  
+**Version**: v1.0.0  
+**Last Updated**: 2025-06-30

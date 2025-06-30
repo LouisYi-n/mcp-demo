@@ -3,7 +3,7 @@ from langchain_community.llms import Ollama
 import re
 import logging
 
-# 配置日志
+# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -11,50 +11,50 @@ llm = Ollama(
     base_url="http://localhost:11434",
     model="deepseek-r1:7b",
     temperature=0.7,
-    verbose=True  # 启用详细日志
+    verbose=True  # Enable verbose logging
 )
 
 def general_chat(query: str) -> str:
-    """通用对话工具，处理一般问题和聊天"""
+    """General chat tool for handling general questions and conversations"""
     try:
-        logger.info(f"调用 Ollama 模型处理查询: {query[:50]}...")
+        logger.info(f"Calling Ollama model to process query: {query[:50]}...")
         
-        # 使用现代的 invoke 方法
+        # Use modern invoke method
         response = llm.invoke(query)
         
-        # 清理响应内容，移除 <think> 标签
+        # Clean response content, remove <think> tags
         cleaned_response = clean_response(response)
         
-        logger.info(f"Ollama 响应完成，长度: {len(cleaned_response)} 字符")
+        logger.info(f"Ollama response completed, length: {len(cleaned_response)} characters")
         return cleaned_response
         
     except Exception as e:
-        error_msg = f"对话处理失败: {e}"
+        error_msg = f"Chat processing failed: {e}"
         logger.error(error_msg)
         return error_msg
 
 def clean_response(response: str) -> str:
-    """清理响应内容，移除think标签和多余的空白"""
+    """Clean response content, remove think tags and extra whitespace"""
     if not response:
-        return "抱歉，我没有生成回复。"
+        return "Sorry, I didn't generate a response."
     
-    # 移除 <think> 标签及其内容
+    # Remove <think> tags and their content
     response = re.sub(r'<think>.*?</think>', '', response, flags=re.DOTALL)
     
-    # 移除多余的空白行
+    # Remove extra blank lines
     response = re.sub(r'\n\s*\n', '\n\n', response)
     
-    # 去除首尾空白
+    # Strip leading and trailing whitespace
     response = response.strip()
     
-    # 如果清理后为空，返回默认消息
+    # If empty after cleaning, return default message
     if not response:
-        return "我理解了您的问题，但暂时无法给出合适的回答。请尝试换个方式提问。"
+        return "I understand your question, but I can't provide a suitable answer at the moment. Please try asking in a different way."
     
     return response
 
 chat_tool = Tool(
     name="general_chat",
     func=general_chat,
-    description="通用对话、知识问答、讲笑话等"
+    description="General conversation, knowledge Q&A, telling jokes, etc."
 ) 

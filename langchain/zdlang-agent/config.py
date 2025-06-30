@@ -1,33 +1,33 @@
 """
-Configuration - 配置文件
-包含应用程序的各种配置选项
+Configuration - Configuration File
+Contains various configuration options for the application
 """
 
 import logging
 
-# 服务配置
+# Service Configuration
 FLASK_HOST = '0.0.0.0'
 FLASK_PORT = 5001
 FLASK_DEBUG = True
 
-# Ollama 配置
+# Ollama Configuration
 OLLAMA_BASE_URL = "http://localhost:11434"
 OLLAMA_MODEL = "deepseek-r1:7b"
 
-# 天气API配置
+# Weather API Configuration
 WEATHER_API_BASE_URL = "http://localhost:8081"
 WEATHER_API_TIMEOUT = 10
 
-# 日志配置
+# Logging Configuration
 LOG_LEVEL = logging.INFO
 LOG_FORMAT = '%(asctime)s %(levelname)s %(message)s'
 
-# 应用信息
+# Application Information
 APP_NAME = "zdlang-agent"
-APP_DESCRIPTION = "智能代理：使用AI路由自动识别意图并调用相应工具"
+APP_DESCRIPTION = "Intelligent Agent: Automatically identifies user intent and calls appropriate tools using AI routing"
 APP_VERSION = "1.0.0"
 
-# 依赖服务
+# Dependent Services
 DEPENDENCIES = {
     "ollama": OLLAMA_BASE_URL,
     "mcp-server": WEATHER_API_BASE_URL

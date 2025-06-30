@@ -22,14 +22,14 @@
             margin: 8px 0;
             border-radius: 8px;
             border-left: 4px solid #4caf50;
-            white-space: pre-wrap; /* 保持换行和空格 */
+            white-space: pre-wrap; /* Preserve line breaks and spaces */
         }
         .think-msg {
-            color: #6c757d; /* 灰色字体 */
-            background: #f8f9fa; /* 更浅的背景 */
-            border-left: 4px solid #adb5bd; /* 灰色边框 */
-            font-size: 0.9em; /* 字体稍小 */
-            margin-bottom: 5px; /* 与最终回复的间距 */
+            color: #6c757d; /* Gray text */
+            background: #f8f9fa; /* Lighter background */
+            border-left: 4px solid #adb5bd; /* Gray border */
+            font-size: 0.9em; /* Slightly smaller font */
+            margin-bottom: 5px; /* Spacing from final reply */
         }
         .loading { text-align: center; color: #666; font-style: italic; }
         .error { background: #ffebee; border-left: 4px solid #f44336; }
@@ -39,24 +39,24 @@
     <div class="container">
         <div class="header">
             <h1>🤖 zdlang-agent</h1>
-            <p>智能代理：使用AI路由自动识别意图并调用相应工具</p>
+            <p>Intelligent Agent: Uses AI routing to automatically identify intent and call appropriate tools</p>
             <div id="toolsList" style="margin-top: 10px; font-size: 12px; color: #666;"></div>
         </div>
         
         <div class="chat-box" id="chatBox">
-            <div class="agent-msg">👋 欢迎使用 zdlang-agent！请输入您的问题。</div>
+            <div class="agent-msg">👋 Welcome to zdlang-agent! Please enter your question.</div>
         </div>
         
         <div class="input-area">
-            <input type="text" id="query" placeholder="输入您的问题，例如：北京天气怎么样？" onkeypress="if(event.keyCode==13) sendQuery()">
-            <button onclick="sendQuery()" id="sendBtn">发送</button>
+            <input type="text" id="query" placeholder="Enter your question, e.g.: How's the weather in Beijing?" onkeypress="if(event.keyCode==13) sendQuery()">
+            <button onclick="sendQuery()" id="sendBtn">Send</button>
         </div>
     </div>
 
     <script>
-        let currentLoadingMessage = null; // 全局变量跟踪当前loading消息
+        let currentLoadingMessage = null; // Global variable to track current loading message
         
-        // 加载可用工具列表
+        // Load available tools list
         function loadTools() {
             fetch('/api/tools')
                 .then(response => response.json())
@@ -65,9 +65,9 @@
                     const toolNames = data.tools.map(tool => {
                         return `${getToolIcon(tool.name)} ${tool.description}`;
                     });
-                    toolsList.innerHTML = `可用工具: ${toolNames.join(' | ')}`;
+                    toolsList.innerHTML = `Available tools: ${toolNames.join(' | ')}`;
                 })
-                .catch(error => console.error('加载工具失败:', error));
+                .catch(error => console.error('Failed to load tools:', error));
         }
         
         function getToolIcon(toolName) {
@@ -81,7 +81,7 @@
             return icons[toolName] || '🔧';
         }
         
-        // 页面加载时获取工具列表
+        // Load tools list when page loads
         document.addEventListener('DOMContentLoaded', loadTools);
         
         function sendQuery() {
@@ -89,20 +89,20 @@
             const sendBtn = document.getElementById('sendBtn');
             if (!query) return;
             
-            console.log('开始发送查询:', query);
+            console.log('Starting query:', query);
             sendBtn.disabled = true;
             document.getElementById('query').disabled = true;
             addMessage(query, 'user-msg');
             document.getElementById('query').value = '';
             
-            // 移除之前的loading消息（如果存在）
+            // Remove previous loading message (if exists)
             if (currentLoadingMessage) {
                 currentLoadingMessage.remove();
             }
             
-            // 创建新的loading消息
-            currentLoadingMessage = addMessage('正在思考中...', 'agent-msg loading');
-            console.log('创建loading消息');
+            // Create new loading message
+            currentLoadingMessage = addMessage('Thinking...', 'agent-msg loading');
+            console.log('Created loading message');
             
             fetch('/api/query', {
                 method: 'POST',
@@ -110,43 +110,43 @@
                 body: JSON.stringify({query: query})
             })
             .then(response => {
-                console.log('收到响应，状态:', response.status);
+                console.log('Received response, status:', response.status);
                 return response.json();
             })
             .then(data => {
-                console.log('解析JSON数据:', data);
+                console.log('Parsed JSON data:', data);
                 
-                // 移除loading消息
+                // Remove loading message
                 if (currentLoadingMessage) {
-                    console.log('移除loading消息');
+                    console.log('Removing loading message');
                     currentLoadingMessage.remove();
                     currentLoadingMessage = null;
                 }
                 
-                // 先展示工具调用过程
+                // Show tool calling process first
                 if (data.tool_calls && data.tool_calls.length > 0) {
-                    console.log('显示工具调用信息，数量:', data.tool_calls.length);
+                    console.log('Showing tool call info, count:', data.tool_calls.length);
                     data.tool_calls.forEach(msg => addMessage(msg, 'agent-msg'));
                 }
-                // 再展示最终答案
+                // Then show final answer
                 if (data.result) {
-                    console.log('显示最终答案，长度:', data.result.length);
+                    console.log('Showing final answer, length:', data.result.length);
                     addMessage('💬 ' + data.result, 'agent-msg');
                 } else {
-                    console.log('没有结果，显示错误消息');
-                    addMessage('抱歉，我没有得到回复。', 'agent-msg error');
+                    console.log('No result, showing error message');
+                    addMessage('Sorry, I didn\'t get a reply.', 'agent-msg error');
                 }
             })
             .catch(error => {
-                console.error('请求失败:', error);
+                console.error('Request failed:', error);
                 if (currentLoadingMessage) {
                     currentLoadingMessage.remove();
                     currentLoadingMessage = null;
                 }
-                addMessage('发生错误: ' + error, 'agent-msg error');
+                addMessage('Error occurred: ' + error, 'agent-msg error');
             })
             .finally(() => {
-                console.log('请求完成，恢复按钮状态');
+                console.log('Request completed, restoring button state');
                 sendBtn.disabled = false;
                 document.getElementById('query').disabled = false;
                 document.getElementById('query').focus();
@@ -157,15 +157,15 @@
             const chatBox = document.getElementById('chatBox');
             const div = document.createElement('div');
             if (className.includes('user-msg')) {
-                div.textContent = '你: ' + text;
+                div.textContent = 'You: ' + text;
             } else {
                 div.textContent = text;
             }
             div.className = className;
             chatBox.appendChild(div);
             chatBox.scrollTop = chatBox.scrollHeight;
-            console.log('添加消息:', text.substring(0, 30), '类名:', className);
-            return div; // 直接返回DOM元素
+            console.log('Added message:', text.substring(0, 30), 'class:', className);
+            return div; // Return DOM element directly
         }
     </script>
 </body>
