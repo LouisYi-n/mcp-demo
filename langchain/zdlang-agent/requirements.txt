@@ -1,2 +1,5 @@
-requests
-flask 
+langchain
+langchain-community
+langchain-core
+flask
+requests 

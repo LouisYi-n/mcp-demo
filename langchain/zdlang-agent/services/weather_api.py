@@ -15,11 +15,6 @@ def get_weather(city: str) -> dict:
         # 尝试不同的参数格式
         test_configs = [
             {"url": f"http://localhost:8081/api/weather?cityName={city}", "method": "GET"},
-            {"url": f"http://localhost:8081/api/weather?city={city}", "method": "GET"},
-            {"url": f"http://localhost:8081/weather?cityName={city}", "method": "GET"},
-            {"url": f"http://localhost:8081/weather?city={city}", "method": "GET"},
-            {"url": "http://localhost:8081/api/weather", "method": "POST", "data": {"cityName": city}},
-            {"url": "http://localhost:8081/api/weather", "method": "POST", "data": {"city": city}},
         ]
         
         for i, config in enumerate(test_configs, 1):

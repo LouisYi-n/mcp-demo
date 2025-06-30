@@ -21,6 +21,9 @@ from handlers.calculator import CalculatorHandler
 # 导入配置
 import config
 
+# 导入 LangChain Agent
+from agent import agent
+
 # 配置日志
 logging.basicConfig(
     level=logging.INFO, 
@@ -97,6 +100,13 @@ def health_check():
         "service": "zdlang-agent",
         "handlers_count": len(router.handlers)
     })
+
+@app.route("/chat", methods=["POST"])
+def chat():
+    data = request.json
+    query = data.get("query", "")
+    result = agent.run(query)
+    return jsonify({"result": result})
 
 def main():
     """主函数"""
